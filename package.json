@@ -1,12 +1,23 @@
 {
-  "name": "apv",
+  "name": "apv-pathfinding-visualizer",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Interactive A* Pathfinding Algorithm Visualizer deployed on Cloudflare Workers",
+  "main": "src/worker.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev --local"
   },
-  "keywords": [],
+  "keywords": [
+    "pathfinding",
+    "a-star",
+    "visualization",
+    "cloudflare-workers",
+    "algorithms"
+  ],
   "author": "",
-  "license": "ISC",
-  "description": ""
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
 }

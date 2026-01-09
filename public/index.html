@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APV - Pathfinding Algorithm Visualizer</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <span class="logo">APV</span>
+        <span class="subtitle">Pathfinding Visualizer</span>
+        <span class="ai-badge">AI Powered</span>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active" data-page="visualizer">Visualizer</button>
+        <button class="nav-btn" data-page="algorithms">Algorithms</button>
+        <button class="nav-btn" data-page="add-algorithm">Add Algorithm</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Visualizer Page -->
+      <section id="visualizer-page" class="page active">
+        <div class="controls-panel">
+          <div class="control-group">
+            <label for="algorithm-select">Algorithm</label>
+            <select id="algorithm-select">
+              <option value="astar">A* Search</option>
+              <option value="dijkstra">Dijkstra's Algorithm</option>
+              <option value="bfs">Breadth-First Search</option>
+              <option value="dfs">Depth-First Search</option>
+              <option value="greedy">Greedy Best-First</option>
+            </select>
+            <button id="ai-recommend-btn" class="btn btn-small btn-ai" title="Get AI recommendation">AI Suggest</button>
+          </div>
+
+          <div class="control-group">
+            <label for="speed-slider">Speed</label>
+            <input type="range" id="speed-slider" min="1" max="100" value="50">
+            <span id="speed-value">50ms</span>
+          </div>
+
+          <div class="control-group">
+            <label for="grid-size">Grid Size</label>
+            <select id="grid-size">
+              <option value="20">20x20</option>
+              <option value="30" selected>30x30</option>
+              <option value="40">40x40</option>
+              <option value="50">50x50</option>
+            </select>
+          </div>
+
+          <div class="control-group buttons">
+            <button id="start-btn" class="btn btn-primary">Start</button>
+            <button id="pause-btn" class="btn btn-secondary" disabled>Pause</button>
+            <button id="step-btn" class="btn btn-secondary">Step</button>
+            <button id="reset-btn" class="btn btn-danger">Reset</button>
+            <button id="clear-walls-btn" class="btn btn-secondary">Clear Walls</button>
+          </div>
+
+          <div class="control-group">
+            <label>Draw Mode</label>
+            <div class="draw-mode-btns">
+              <button class="draw-btn active" data-mode="wall">Wall</button>
+              <button class="draw-btn" data-mode="start">Start</button>
+              <button class="draw-btn" data-mode="end">End</button>
+              <button class="draw-btn" data-mode="weight">Weight</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>Maze Generation</label>
+            <div class="maze-btns">
+              <button id="maze-recursive" class="btn btn-small">Recursive Division</button>
+              <button id="maze-random" class="btn btn-small">Random</button>
+            </div>
+          </div>
+
+          <!-- AI Problem Input -->
+          <div class="control-group ai-input-group">
+            <label>AI Problem Setup</label>
+            <textarea id="ai-problem-input" placeholder="Describe your pathfinding problem in natural language, e.g., 'Create a maze with the start in the top-left corner and the goal in the bottom-right, with some obstacles in the middle'"></textarea>
+            <button id="ai-parse-btn" class="btn btn-ai">Generate from Description</button>
+          </div>
+        </div>
+
+        <div class="visualization-area">
+          <div class="grid-container">
+            <canvas id="grid-canvas"></canvas>
+          </div>
+
+          <div class="stats-panel">
+            <div class="stat">
+              <span class="stat-label">Nodes Visited</span>
+              <span id="nodes-visited" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Path Length</span>
+              <span id="path-length" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Time Elapsed</span>
+              <span id="time-elapsed" class="stat-value">0ms</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Status</span>
+              <span id="status" class="stat-value">Ready</span>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="legend-color start"></span> Start</div>
+            <div class="legend-item"><span class="legend-color end"></span> End</div>
+            <div class="legend-item"><span class="legend-color wall"></span> Wall</div>
+            <div class="legend-item"><span class="legend-color weight"></span> Weight (5x)</div>
+            <div class="legend-item"><span class="legend-color visited"></span> Visited</div>
+            <div class="legend-item"><span class="legend-color frontier"></span> Frontier</div>
+            <div class="legend-item"><span class="legend-color path"></span> Path</div>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <div class="info-section">
+            <h3 id="algo-title">A* Search</h3>
+            <p id="algo-description">A* combines the best features of Dijkstra's and Greedy Best-First. It uses a heuristic to guide the search while still guaranteeing the shortest path.</p>
+            <div class="algo-properties">
+              <div class="property">
+                <span class="property-label">Guarantees Shortest Path:</span>
+                <span id="guarantees-shortest" class="property-value yes">Yes</span>
+              </div>
+              <div class="property">
+                <span class="property-label">Uses Heuristic:</span>
+                <span id="uses-heuristic" class="property-value yes">Yes</span>
+              </div>
+              <div class="property">
+                <span class="property-label">Weighted:</span>
+                <span id="weighted" class="property-value yes">Yes</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Explanation Panel -->
+          <div class="ai-panel">
+            <div class="ai-panel-header">
+              <h4>AI Step Explanation</h4>
+              <label class="toggle-switch">
+                <input type="checkbox" id="ai-explanations-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="ai-explanation-content" class="ai-explanation-content">
+              <p class="ai-placeholder">Enable AI explanations and run the algorithm to see step-by-step explanations here.</p>
+            </div>
+            <div id="ai-loading" class="ai-loading hidden">
+              <div class="ai-spinner"></div>
+              <span>Thinking...</span>
+            </div>
+          </div>
+
+          <!-- AI Recommendation Panel -->
+          <div id="ai-recommendation-panel" class="ai-recommendation hidden">
+            <h4>AI Recommendation</h4>
+            <div id="ai-recommendation-content"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Algorithms Page -->
+      <section id="algorithms-page" class="page">
+        <h2>Pathfinding Algorithms</h2>
+        <p class="page-intro">Learn about different pathfinding algorithms, their characteristics, and when to use them.</p>
+
+        <div class="algorithms-grid">
+          <div class="algorithm-card" data-algo="astar">
+            <h3>A* Search</h3>
+            <div class="algo-badges">
+              <span class="badge optimal">Optimal</span>
+              <span class="badge heuristic">Heuristic</span>
+              <span class="badge weighted">Weighted</span>
+            </div>
+            <p>The gold standard of pathfinding. A* uses a heuristic function to estimate distance to the goal, combining the actual cost from start with estimated cost to goal (f = g + h).</p>
+            <div class="complexity">
+              <span>Time: O(E log V)</span>
+              <span>Space: O(V)</span>
+            </div>
+            <pre><code>f(n) = g(n) + h(n)
+where:
+  g(n) = cost from start to n
+  h(n) = heuristic estimate to goal</code></pre>
+            <div class="card-actions">
+              <button class="btn btn-primary try-btn" data-algo="astar">Try It</button>
+              <button class="btn btn-ai ai-explain-btn" data-algo="astar">AI Explain</button>
+            </div>
+          </div>
+
+          <div class="algorithm-card" data-algo="dijkstra">
+            <h3>Dijkstra's Algorithm</h3>
+            <div class="algo-badges">
+              <span class="badge optimal">Optimal</span>
+              <span class="badge weighted">Weighted</span>
+            </div>
+            <p>Explores all directions equally, guaranteeing the shortest path. Essentially A* with h(n) = 0. More thorough but slower than A* for single-destination searches.</p>
+            <div class="complexity">
+              <span>Time: O(E log V)</span>
+              <span>Space: O(V)</span>
+            </div>
+            <pre><code>// Always expand node with lowest g(n)
+// No heuristic guidance
+f(n) = g(n)</code></pre>
+            <div class="card-actions">
+              <button class="btn btn-primary try-btn" data-algo="dijkstra">Try It</button>
+              <button class="btn btn-ai ai-explain-btn" data-algo="dijkstra">AI Explain</button>
+            </div>
+          </div>
+
+          <div class="algorithm-card" data-algo="bfs">
+            <h3>Breadth-First Search</h3>
+            <div class="algo-badges">
+              <span class="badge optimal">Optimal*</span>
+              <span class="badge unweighted">Unweighted</span>
+            </div>
+            <p>Explores nodes level by level. Guarantees shortest path only in unweighted graphs. Simple and efficient for uniform-cost scenarios.</p>
+            <div class="complexity">
+              <span>Time: O(V + E)</span>
+              <span>Space: O(V)</span>
+            </div>
+            <pre><code>// Use a queue (FIFO)
+// Expand oldest nodes first
+// All edges have cost 1</code></pre>
+            <div class="card-actions">
+              <button class="btn btn-primary try-btn" data-algo="bfs">Try It</button>
+              <button class="btn btn-ai ai-explain-btn" data-algo="bfs">AI Explain</button>
+            </div>
+          </div>
+
+          <div class="algorithm-card" data-algo="dfs">
+            <h3>Depth-First Search</h3>
+            <div class="algo-badges">
+              <span class="badge non-optimal">Not Optimal</span>
+              <span class="badge unweighted">Unweighted</span>
+            </div>
+            <p>Explores as deep as possible before backtracking. Does NOT guarantee shortest path. Useful for maze solving and detecting connectivity.</p>
+            <div class="complexity">
+              <span>Time: O(V + E)</span>
+              <span>Space: O(V)</span>
+            </div>
+            <pre><code>// Use a stack (LIFO)
+// Expand newest nodes first
+// May find long paths</code></pre>
+            <div class="card-actions">
+              <button class="btn btn-primary try-btn" data-algo="dfs">Try It</button>
+              <button class="btn btn-ai ai-explain-btn" data-algo="dfs">AI Explain</button>
+            </div>
+          </div>
+
+          <div class="algorithm-card" data-algo="greedy">
+            <h3>Greedy Best-First</h3>
+            <div class="algo-badges">
+              <span class="badge non-optimal">Not Optimal</span>
+              <span class="badge heuristic">Heuristic</span>
+            </div>
+            <p>Always moves toward the goal using only the heuristic. Very fast but does not guarantee shortest path. Can get stuck in dead ends.</p>
+            <div class="complexity">
+              <span>Time: O(E log V)</span>
+              <span>Space: O(V)</span>
+            </div>
+            <pre><code>// Only use heuristic
+f(n) = h(n)
+// Ignores actual path cost</code></pre>
+            <div class="card-actions">
+              <button class="btn btn-primary try-btn" data-algo="greedy">Try It</button>
+              <button class="btn btn-ai ai-explain-btn" data-algo="greedy">AI Explain</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Explanation Modal -->
+        <div id="ai-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 id="modal-title">AI Explanation</h3>
+              <button class="modal-close">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body">
+              <div class="ai-loading">
+                <div class="ai-spinner"></div>
+                <span>Generating explanation...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="comparison-section">
+          <h3>Algorithm Comparison</h3>
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Algorithm</th>
+                <th>Optimal</th>
+                <th>Complete</th>
+                <th>Weighted</th>
+                <th>Heuristic</th>
+                <th>Best Use Case</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A*</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+                <td>General pathfinding with varying terrain</td>
+              </tr>
+              <tr>
+                <td>Dijkstra</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+                <td class="yes">Yes</td>
+                <td class="no">No</td>
+                <td>When you need all shortest paths</td>
+              </tr>
+              <tr>
+                <td>BFS</td>
+                <td class="yes">Yes*</td>
+                <td class="yes">Yes</td>
+                <td class="no">No</td>
+                <td class="no">No</td>
+                <td>Uniform cost grids, simple mazes</td>
+              </tr>
+              <tr>
+                <td>DFS</td>
+                <td class="no">No</td>
+                <td class="yes">Yes</td>
+                <td class="no">No</td>
+                <td class="no">No</td>
+                <td>Connectivity, maze generation</td>
+              </tr>
+              <tr>
+                <td>Greedy</td>
+                <td class="no">No</td>
+                <td class="no">No</td>
+                <td class="no">No</td>
+                <td class="yes">Yes</td>
+                <td>Quick estimates, open spaces</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="footnote">* BFS is optimal only for unweighted graphs</p>
+        </div>
+      </section>
+
+      <!-- Add Algorithm Page -->
+      <section id="add-algorithm-page" class="page">
+        <h2>Add New Algorithm</h2>
+        <p class="page-intro">Extend the visualizer with your own pathfinding algorithm. Your algorithm will be saved locally and can be used in the visualizer.</p>
+
+        <div class="add-algorithm-container">
+          <div class="form-section">
+            <h3>Algorithm Details</h3>
+            <div class="form-group">
+              <label for="new-algo-name">Algorithm Name</label>
+              <input type="text" id="new-algo-name" placeholder="e.g., Bidirectional A*">
+            </div>
+            <div class="form-group">
+              <label for="new-algo-description">Description</label>
+              <textarea id="new-algo-description" rows="3" placeholder="Describe how your algorithm works..."></textarea>
+            </div>
+            <div class="form-group checkboxes">
+              <label><input type="checkbox" id="new-algo-optimal"> Guarantees Shortest Path</label>
+              <label><input type="checkbox" id="new-algo-heuristic"> Uses Heuristic</label>
+              <label><input type="checkbox" id="new-algo-weighted"> Supports Weighted Edges</label>
+            </div>
+          </div>
+
+          <div class="code-section">
+            <h3>Implementation</h3>
+            <p class="code-help">Implement the <code>search</code> function. It receives the grid, start, and end positions. Use <code>yield</code> to visualize each step.</p>
+            <div class="code-editor">
+              <div class="editor-header">
+                <span>algorithm.js</span>
+                <button id="format-code" class="btn btn-small">Format</button>
+              </div>
+              <textarea id="algorithm-code" spellcheck="false">// Your pathfinding algorithm
+// This is a generator function that yields visualization states
+
+function* search(grid, start, end, getNeighbors, heuristic) {
+  // grid[y][x] = { x, y, wall, weight, visited, inFrontier }
+  // start = { x, y }
+  // end = { x, y }
+  // getNeighbors(node) returns array of neighbor nodes
+  // heuristic(a, b) returns estimated distance
+
+  const visited = new Set();
+  const frontier = [start];
+  const cameFrom = new Map();
+
+  while (frontier.length > 0) {
+    const current = frontier.shift();
+    const key = `${current.x},${current.y}`;
+
+    if (visited.has(key)) continue;
+    visited.add(key);
+    grid[current.y][current.x].visited = true;
+
+    // Yield to visualize this step
+    yield { type: 'visit', node: current };
+
+    // Check if we reached the goal
+    if (current.x === end.x && current.y === end.y) {
+      // Reconstruct path
+      const path = [];
+      let node = current;
+      while (node) {
+        path.unshift(node);
+        node = cameFrom.get(`${node.x},${node.y}`);
+      }
+      yield { type: 'path', path };
+      return path;
+    }
+
+    // Explore neighbors
+    for (const neighbor of getNeighbors(current)) {
+      const nKey = `${neighbor.x},${neighbor.y}`;
+      if (!visited.has(nKey) && !neighbor.wall) {
+        frontier.push(neighbor);
+        grid[neighbor.y][neighbor.x].inFrontier = true;
+        cameFrom.set(nKey, current);
+        yield { type: 'frontier', node: neighbor };
+      }
+    }
+  }
+
+  // No path found
+  yield { type: 'no-path' };
+  return null;
+}</textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="test-algorithm" class="btn btn-secondary">Test Algorithm</button>
+            <button id="save-algorithm" class="btn btn-primary">Save Algorithm</button>
+          </div>
+
+          <div id="test-output" class="test-output hidden">
+            <h4>Test Output</h4>
+            <pre id="test-result"></pre>
+          </div>
+        </div>
+
+        <div class="saved-algorithms">
+          <h3>Saved Custom Algorithms</h3>
+          <div id="custom-algorithms-list" class="custom-algo-list">
+            <p class="empty-message">No custom algorithms saved yet.</p>
+          </div>
+        </div>
+
+        <div class="api-reference">
+          <h3>API Reference</h3>
+          <div class="api-section">
+            <h4>Function Signature</h4>
+            <pre><code>function* search(grid, start, end, getNeighbors, heuristic)</code></pre>
+          </div>
+          <div class="api-section">
+            <h4>Parameters</h4>
+            <ul>
+              <li><code>grid</code> - 2D array of nodes. Each node has: <code>{ x, y, wall, weight, visited, inFrontier }</code></li>
+              <li><code>start</code> - Start node: <code>{ x, y }</code></li>
+              <li><code>end</code> - End/goal node: <code>{ x, y }</code></li>
+              <li><code>getNeighbors(node)</code> - Returns array of adjacent nodes (4-directional)</li>
+              <li><code>heuristic(a, b)</code> - Manhattan distance heuristic function</li>
+            </ul>
+          </div>
+          <div class="api-section">
+            <h4>Yield Types</h4>
+            <ul>
+              <li><code>{ type: 'visit', node }</code> - Mark node as visited (blue)</li>
+              <li><code>{ type: 'frontier', node }</code> - Add node to frontier (light blue)</li>
+              <li><code>{ type: 'path', path }</code> - Final path found (yellow)</li>
+              <li><code>{ type: 'no-path' }</code> - No path exists</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/algorithms.js"></script>
+  <script src="/js/grid.js"></script>
+  <script src="/js/visualizer.js"></script>
+  <script src="/js/ai.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

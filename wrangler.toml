@@ -1,0 +1,14 @@
+name = "apv-pathfinding-visualizer"
+main = "src/worker.js"
+compatibility_date = "2024-12-01"
+workers_dev = false
+
+[[routes]]
+pattern = "algo.hwmnbn.me"
+custom_domain = true
+
+[assets]
+directory = "./public"
+
+[ai]
+binding = "AI"
